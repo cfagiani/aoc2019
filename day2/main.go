@@ -26,7 +26,7 @@ func part2() (int, int) {
 
 func part1(noun int, verb int) int {
 	content := util.ReadFileAsString("input/day2.input")
-	computer := intcomputer.NewComputer(content, noun, verb)
+	computer := intcomputer.NewComputer(content, noun, verb, true, intcomputer.NewInputSupplier([]int{}), intcomputer.NewOutputSupplier())
 	for ; !computer.ExecuteNextInstruction(); {
 		// do nothing
 	}
