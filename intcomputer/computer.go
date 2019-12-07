@@ -4,6 +4,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type InputSupplier interface {
@@ -86,6 +87,33 @@ type ArrayInputSupplier struct {
 	curIdx int
 }
 
+type ChannelIOSupplier struct {
+	IOChannel chan int
+}
+
+func NewChannelIOSupplier(inputSeed []int) *ChannelIOSupplier {
+	supplier := &ChannelIOSupplier{
+		// buffer up to 100 values
+		IOChannel: make(chan int, 100),
+	}
+	seedInput(supplier.IOChannel, inputSeed)
+	return supplier
+}
+
+func seedInput(channel chan int, inputSeed []int) {
+	for _, input := range inputSeed {
+		channel <- input
+	}
+}
+
+func (c *ChannelIOSupplier) GetNextInput() int {
+	return <-c.IOChannel
+}
+
+func (c *ChannelIOSupplier) WriteOutput(val int) {
+	c.IOChannel <- val
+}
+
 func NewInputSupplier(data []int) *ArrayInputSupplier {
 	return &ArrayInputSupplier{Inputs: data, curIdx: 0}
 }
@@ -164,4 +192,13 @@ func (c *IntComputer) ExecuteNextInstruction() bool {
 	}
 
 	return false
+}
+
+func (c *IntComputer) RunToCompletion(wg *sync.WaitGroup) {
+	for ; !c.ExecuteNextInstruction(); {
+		// do nothing
+	}
+	if wg != nil {
+		wg.Done()
+	}
 }

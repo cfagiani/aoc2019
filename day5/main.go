@@ -15,9 +15,7 @@ func part1() int {
 	content := util.ReadFileAsString("input/day5.input")
 	output := intcomputer.NewOutputSupplier()
 	computer := intcomputer.NewComputer(content, 0, 0, false, intcomputer.NewInputSupplier([]int{1}), output)
-	for ; !computer.ExecuteNextInstruction(); {
-		// do nothing
-	}
+	computer.RunToCompletion(nil)
 	return output.Output[len(output.Output)-1]
 }
 
@@ -26,8 +24,6 @@ func part2() int {
 	content := util.ReadFileAsString("input/day5.input")
 	output := intcomputer.NewOutputSupplier()
 	computer := intcomputer.NewComputer(content, 0, 0, false, intcomputer.NewInputSupplier([]int{5}), output)
-	for ; !computer.ExecuteNextInstruction(); {
-		// do nothing
-	}
+	computer.RunToCompletion(nil)
 	return output.Output[len(output.Output)-1]
 }

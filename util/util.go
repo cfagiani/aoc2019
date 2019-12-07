@@ -112,3 +112,36 @@ func PrintByteArray(state [][]byte) {
 	}
 	fmt.Printf("\n")
 }
+
+// Returns an array of slices such that all permutations of the input array are represented.
+// Uses Heap's algorithm (https://en.wikipedia.org/wiki/Heap%27s_algorithm)
+func AllPermutations(arr []int) [][]int {
+	var permutationGenerator func([]int, int)
+	var allPermutations [][]int
+
+	permutationGenerator = func(arr []int, n int) {
+		if n == 1 {
+			// if there is only 1 element, there is nothing to do
+			tmp := make([]int, len(arr))
+			copy(tmp, arr)
+			allPermutations = append(allPermutations, tmp)
+		} else {
+			for i := 0; i < n; i++ {
+				permutationGenerator(arr, n-1)
+				if n%2 == 1 {
+					// n is odd
+					tmp := arr[i]
+					arr[i] = arr[n-1]
+					arr[n-1] = tmp
+				} else {
+					// n is even
+					tmp := arr[0]
+					arr[0] = arr[n-1]
+					arr[n-1] = tmp
+				}
+			}
+		}
+	}
+	permutationGenerator(arr, len(arr))
+	return allPermutations
+}
