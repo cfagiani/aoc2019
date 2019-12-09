@@ -22,64 +22,65 @@ type OpCode struct {
 	Args     []int
 	Mode     int
 	Name     string
-	Executor func([]int, []int, int, []int, InputSupplier, OutputConsumer) int
+	Executor func([]int, map[int]int, int, int, []int, InputSupplier, OutputConsumer) (int, int)
 }
 
 var supportedCodes = map[int]OpCode{
-	1: {Name: "Add", ArgCount: 3, Executor: func(args []int, mem []int, ip int, modes []int, input InputSupplier, output OutputConsumer) int {
-		mem[args[2]] = getParamVal(args[0], modes[0], mem) + getParamVal(args[1], modes[1], mem)
-		return ip + len(args) + 1
-	}}, 2: {Name: "Multiply", ArgCount: 3, Executor: func(args []int, mem []int, ip int, modes []int, input InputSupplier, output OutputConsumer) int {
-		mem[args[2]] = getParamVal(args[0], modes[0], mem) * getParamVal(args[1], modes[1], mem)
-		return ip + len(args) + 1
-	}}, 3: {Name: "Input", ArgCount: 1, Executor: func(args []int, mem []int, ip int, modes []int, input InputSupplier, output OutputConsumer) int {
+	1: {Name: "Add", ArgCount: 3, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
+		mem[args[2]] = getParamVal(args[0], modes[0], relBase, mem) + getParamVal(args[1], modes[1], relBase, mem)
+		return ip + len(args) + 1, relBase
+	}}, 2: {Name: "Multiply", ArgCount: 3, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
+		mem[args[2]] = getParamVal(args[0], modes[0], relBase, mem) * getParamVal(args[1], modes[1], relBase, mem)
+		return ip + len(args) + 1, relBase
+	}}, 3: {Name: "Input", ArgCount: 1, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
 		mem[args[0]] = input.GetNextInput()
-		return ip + len(args) + 1
-	}}, 4: {Name: "Output", ArgCount: 1, Executor: func(args []int, mem []int, ip int, modes []int, input InputSupplier, output OutputConsumer) int {
-		if modes[0] == 0 {
-			output.WriteOutput(mem[args[0]])
-		} else {
-			output.WriteOutput(args[0])
-		}
-		return ip + len(args) + 1
-	}}, 5: {Name: "Jump-if-true", ArgCount: 2, Executor: func(args []int, mem []int, ip int, modes []int, input InputSupplier, output OutputConsumer) int {
-		val := getParamVal(args[0], modes[0], mem)
-		if val != 0 {
-			return getParamVal(args[1], modes[1], mem)
-		} else {
-			return ip + len(args) + 1
-		}
-	}}, 6: {Name: "Jump-if-false", ArgCount: 2, Executor: func(args []int, mem []int, ip int, modes []int, input InputSupplier, output OutputConsumer) int {
-		val := getParamVal(args[0], modes[0], mem)
-		if val == 0 {
-			return getParamVal(args[1], modes[1], mem)
-		} else {
-			return ip + len(args) + 1
-		}
-	}}, 7: {Name: "Less-Than", ArgCount: 3, Executor: func(args []int, mem []int, ip int, modes []int, input InputSupplier, output OutputConsumer) int {
+		return ip + len(args) + 1, relBase
+	}}, 4: {Name: "Output", ArgCount: 1, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
 
-		if getParamVal(args[0], modes[0], mem) < getParamVal(args[1], modes[1], mem) {
+		output.WriteOutput(getParamVal(args[0], modes[0], relBase, mem))
+		return ip + len(args) + 1, relBase
+	}}, 5: {Name: "Jump-if-true", ArgCount: 2, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
+		val := getParamVal(args[0], modes[0], relBase, mem)
+		if val != 0 {
+			return getParamVal(args[1], modes[1], relBase, mem), relBase
+		} else {
+			return ip + len(args) + 1, relBase
+		}
+	}}, 6: {Name: "Jump-if-false", ArgCount: 2, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
+		val := getParamVal(args[0], modes[0], relBase, mem)
+		if val == 0 {
+			return getParamVal(args[1], modes[1], relBase, mem), relBase
+		} else {
+			return ip + len(args) + 1, relBase
+		}
+	}}, 7: {Name: "Less-Than", ArgCount: 3, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
+
+		if getParamVal(args[0], modes[0], relBase, mem) < getParamVal(args[1], modes[1], relBase, mem) {
 			mem[args[2]] = 1
 		} else {
 			mem[args[2]] = 0
 		}
-		return ip + len(args) + 1
-	}}, 8: {Name: "Equals", ArgCount: 3, Executor: func(args []int, mem []int, ip int, modes []int, input InputSupplier, output OutputConsumer) int {
-		if getParamVal(args[0], modes[0], mem) == getParamVal(args[1], modes[1], mem) {
+		return ip + len(args) + 1, relBase
+	}}, 8: {Name: "Equals", ArgCount: 3, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
+		if getParamVal(args[0], modes[0], relBase, mem) == getParamVal(args[1], modes[1], relBase, mem) {
 			mem[args[2]] = 1
 		} else {
 			mem[args[2]] = 0
 		}
-		return ip + len(args) + 1
+		return ip + len(args) + 1, relBase
+	}}, 9: {Name: "Adj Rel Base", ArgCount: 1, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
+
+		return ip + len(args) + 1, relBase + getParamVal(args[0], modes[0], relBase, mem)
 	}},
 	99: {ArgCount: 0}}
 
 type IntComputer struct {
-	Memory             []int
+	Memory             map[int]int
 	InstructionPointer int
 	Program            []OpCode
 	Input              InputSupplier
 	Output             OutputConsumer
+	RelativeBase       int
 }
 
 type ArrayInputSupplier struct {
@@ -136,17 +137,19 @@ func (in *ArrayInputSupplier) GetNextInput() int {
 	return val
 }
 
-func getParamVal(param int, mode int, memory []int) int {
+func getParamVal(param int, mode int, relBase int, memory map[int]int) int {
 	if mode == 0 {
 		return memory[param]
-	} else {
+	} else if mode == 1 {
 		return param
+	} else {
+		return memory[param+relBase]
 	}
 }
 
 func NewComputer(initialMemory string, noun int, verb int, setParams bool, input InputSupplier, output OutputConsumer) *IntComputer {
 	tokens := strings.Split(initialMemory, ",")
-	memory := make([]int, len(tokens))
+	memory := make(map[int]int)
 	for i := 0; i < len(tokens); i++ {
 		val, err := strconv.Atoi(tokens[i])
 		if err != nil {
@@ -188,7 +191,7 @@ func (c *IntComputer) ExecuteNextInstruction() bool {
 	case 99:
 		return true
 	default:
-		c.InstructionPointer = opCode.Executor(opCode.Args, c.Memory, c.InstructionPointer, opCode.Modes, c.Input, c.Output)
+		c.InstructionPointer, c.RelativeBase = opCode.Executor(opCode.Args, c.Memory, c.InstructionPointer, c.RelativeBase, opCode.Modes, c.Input, c.Output)
 	}
 
 	return false
