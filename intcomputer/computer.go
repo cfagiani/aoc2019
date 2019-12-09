@@ -27,16 +27,15 @@ type OpCode struct {
 
 var supportedCodes = map[int]OpCode{
 	1: {Name: "Add", ArgCount: 3, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
-		mem[args[2]] = getParamVal(args[0], modes[0], relBase, mem) + getParamVal(args[1], modes[1], relBase, mem)
+		mem[getAddress(args[2], modes[2], relBase)] = getParamVal(args[0], modes[0], relBase, mem) + getParamVal(args[1], modes[1], relBase, mem)
 		return ip + len(args) + 1, relBase
 	}}, 2: {Name: "Multiply", ArgCount: 3, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
-		mem[args[2]] = getParamVal(args[0], modes[0], relBase, mem) * getParamVal(args[1], modes[1], relBase, mem)
+		mem[getAddress(args[2], modes[2], relBase)] = getParamVal(args[0], modes[0], relBase, mem) * getParamVal(args[1], modes[1], relBase, mem)
 		return ip + len(args) + 1, relBase
 	}}, 3: {Name: "Input", ArgCount: 1, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
-		mem[args[0]] = input.GetNextInput()
+		mem[getAddress(args[0], modes[0], relBase)] = input.GetNextInput()
 		return ip + len(args) + 1, relBase
 	}}, 4: {Name: "Output", ArgCount: 1, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
-
 		output.WriteOutput(getParamVal(args[0], modes[0], relBase, mem))
 		return ip + len(args) + 1, relBase
 	}}, 5: {Name: "Jump-if-true", ArgCount: 2, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
@@ -56,16 +55,16 @@ var supportedCodes = map[int]OpCode{
 	}}, 7: {Name: "Less-Than", ArgCount: 3, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
 
 		if getParamVal(args[0], modes[0], relBase, mem) < getParamVal(args[1], modes[1], relBase, mem) {
-			mem[args[2]] = 1
+			mem[getAddress(args[2], modes[2], relBase)] = 1
 		} else {
-			mem[args[2]] = 0
+			mem[getAddress(args[2], modes[2], relBase)] = 0
 		}
 		return ip + len(args) + 1, relBase
 	}}, 8: {Name: "Equals", ArgCount: 3, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
 		if getParamVal(args[0], modes[0], relBase, mem) == getParamVal(args[1], modes[1], relBase, mem) {
-			mem[args[2]] = 1
+			mem[getAddress(args[2], modes[2], relBase)] = 1
 		} else {
-			mem[args[2]] = 0
+			mem[getAddress(args[2], modes[2], relBase)] = 0
 		}
 		return ip + len(args) + 1, relBase
 	}}, 9: {Name: "Adj Rel Base", ArgCount: 1, Executor: func(args []int, mem map[int]int, ip int, relBase int, modes []int, input InputSupplier, output OutputConsumer) (int, int) {
@@ -144,6 +143,16 @@ func getParamVal(param int, mode int, relBase int, memory map[int]int) int {
 		return param
 	} else {
 		return memory[param+relBase]
+	}
+}
+
+func getAddress(loc int, mode int, relBase int) int {
+	if mode == 0 {
+		return loc
+	} else if mode == 1 {
+		return loc
+	} else {
+		return loc + relBase
 	}
 }
 
