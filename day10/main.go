@@ -18,7 +18,6 @@ func (a *Asteroid) eq(b Asteroid) bool {
 
 func main() {
 	allAsteroids, station := part1()
-	//826 too high; 322 too low; 1205 wrong too; as is 413; as is 504
 	part2(allAsteroids, station)
 }
 
