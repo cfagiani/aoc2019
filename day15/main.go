@@ -158,20 +158,61 @@ func (d *RepairDroid) WriteOutput(val int) {
 }
 
 func main() {
-	part1()
+	robot, goal := part1()
+	part2(robot, goal)
 }
 
-func part1() {
+func part1() (*RepairDroid, Point) {
 	content := util.ReadFileAsString("input/day15.input")
 	robot := MakeRobot()
 	computer := intcomputer.NewComputer(content, 0, 0, false, robot, robot)
 	computer.RunToCompletion(nil)
 	robot.Print()
 	// now we have the maze discovered, find shortest path via Dijkstra's algorithm
-	shortestPath(robot)
+	_, goal := shortestPath(robot)
+	return robot, goal
 }
 
-func shortestPath(droid *RepairDroid) {
+func part2(robot *RepairDroid, goalPoint Point) {
+	spaceToFill := 0
+	offsets := []Point{Point{0, -1}, Point{0, 1}, Point{-1, 0}, Point{1, 0}}
+	for _, val := range robot.Grid {
+		if val != -1 {
+			spaceToFill++
+		}
+	}
+	seen := make(map[Point]bool)
+	minutes := -1 // start at -1 since the goal space is filled at minute 0
+	frontier := []Point{goalPoint}
+	for len(seen) < spaceToFill {
+		minutes++
+		var nextFrontier []Point
+		for _, loc := range frontier {
+			seen[loc] = true
+			for _, offset := range offsets {
+				if isVacant(robot.Grid, seen, loc.Add(offset)) {
+					nextFrontier = append(nextFrontier, loc.Add(offset))
+				}
+			}
+		}
+		frontier = nextFrontier
+	}
+	fmt.Printf("Took %d minutes to fill with Oxygen", minutes)
+}
+
+func isVacant(grid map[Point]int, seen map[Point]bool, loc Point) bool {
+	val, ok := seen[loc]
+	if ok && val {
+		return false
+	}
+	gridVal, ok := grid[loc]
+	if !ok {
+		return false
+	}
+	return gridVal != -1
+}
+
+func shortestPath(droid *RepairDroid) (int, Point) {
 	defaultVal := 10000000
 	offsets := []Point{Point{0, -1}, Point{0, 1}, Point{-1, 0}, Point{1, 0}}
 	distances := make(map[Point]int)
@@ -216,6 +257,7 @@ func shortestPath(droid *RepairDroid) {
 		delete(unvisited, current)
 	}
 	fmt.Printf("Min Path is %d\n", distances[goalLoc])
+	return distances[goalLoc], goalLoc
 }
 
 func MakeRobot() *RepairDroid {
