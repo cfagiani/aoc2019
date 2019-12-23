@@ -16,49 +16,42 @@ func (p *Point) Add(other Point) Point {
 
 type RepairDroid struct {
 	Grid         map[Point]int
-	Frontier     PointStack
+	Backtrack    MoveStack
 	Position     Point
 	NextPosition Point
 }
 
-type PointStack struct {
+type MoveStack struct {
 	len int
 	top *stackNode
 }
 
 type stackNode struct {
-	Pos  Point
 	Move int
 	prev *stackNode
 }
 
-func (s *PointStack) Push(val Point, move int) {
-	// first make sure we don't already have this node
-	for node := s.top; node != nil; node = node.prev {
-		if node.Pos == val && node.Move == move {
-			return
-		}
-	}
+func (s *MoveStack) Push(move int) {
+
 	s.len++
 	if s.top == nil {
-		s.top = &stackNode{Pos: val, Move: move, prev: nil}
+		s.top = &stackNode{Move: move, prev: nil}
 	} else {
-		s.top = &stackNode{Pos: val, Move: move, prev: s.top}
+		s.top = &stackNode{Move: move, prev: s.top}
 	}
 }
 
-func (s *PointStack) Pop() (*Point, int) {
+func (s *MoveStack) Pop() int {
 	if s.len > 0 {
 		s.len--
-		pos := s.top.Pos
 		move := s.top.Move
 		s.top = s.top.prev
-		return &pos, move
+		return move
 	}
-	return nil, 0
+	return 0
 }
 
-func (s *PointStack) Depth() int {
+func (s *MoveStack) Depth() int {
 	return s.len
 }
 
@@ -100,24 +93,33 @@ func (d *RepairDroid) Print() {
 }
 
 func (d *RepairDroid) GetNextInput() int {
+	// check each neighbor to see if we've visited, if so, move there and pus the opposite direction so we can easily
+	// undo the move when backtracking
 	if !d.HasVisited(d.Position.X, d.Position.Y-1) {
-		d.Frontier.Push(d.Position, 1)
+		d.NextPosition = Point{d.Position.X, d.Position.Y - 1}
+		d.Backtrack.Push(2)
+		return 1
 	}
 	if !d.HasVisited(d.Position.X, d.Position.Y+1) {
-		d.Frontier.Push(d.Position, 2)
+		d.NextPosition = Point{d.Position.X, d.Position.Y + 1}
+		d.Backtrack.Push(1)
+		return 2
 	}
 	if !d.HasVisited(d.Position.X-1, d.Position.Y) {
-		d.Frontier.Push(d.Position, 3)
+		d.NextPosition = Point{d.Position.X - 1, d.Position.Y}
+		d.Backtrack.Push(4)
+		return 3
 	}
 	if !d.HasVisited(d.Position.X+1, d.Position.Y) {
-		d.Frontier.Push(d.Position, 4)
+		d.NextPosition = Point{d.Position.X + 1, d.Position.Y}
+		d.Backtrack.Push(3)
+		return 4
 	}
 
-	if d.Frontier.Depth() == 0 {
+	if d.Backtrack.Depth() == 0 {
 		return 0 // nowhere left to explore
 	} else {
-		pos, move := d.Frontier.Pop()
-		d.Position = *pos
+		move := d.Backtrack.Pop()
 		switch move {
 		case 1:
 			d.NextPosition = Point{d.Position.X, d.Position.Y - 1}
@@ -142,6 +144,8 @@ func (d *RepairDroid) WriteOutput(val int) {
 	case 0:
 		//wall
 		d.Grid[d.NextPosition] = -1
+		// need to pop last backtrack since we didn't actually move
+		d.Backtrack.Pop()
 	case 1:
 		d.Grid[d.NextPosition] = 1
 		d.Position = d.NextPosition
@@ -215,7 +219,7 @@ func shortestPath(droid *RepairDroid) {
 }
 
 func MakeRobot() *RepairDroid {
-	droid := RepairDroid{Grid: make(map[Point]int), Position: Point{0, 0}, Frontier: PointStack{}}
+	droid := RepairDroid{Grid: make(map[Point]int), Position: Point{0, 0}, Backtrack: MoveStack{}}
 	droid.Grid[Point{0, 0}] = 1
 	return &droid
 }
