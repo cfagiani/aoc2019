@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 )
 
 //Checks the error argument and, if it is not nil, it will log the msg passed in. If isFatal is true, the log will be
@@ -111,6 +112,16 @@ func PrintByteArray(state [][]byte) {
 		fmt.Printf("\n")
 	}
 	fmt.Printf("\n")
+}
+
+// Converts a string containing integers into a int array
+func GetStringAsIntArray(input string) []int {
+	output := make([]int, len(input))
+	for i, c := range input {
+		n, _ := strconv.Atoi(string(c))
+		output[i] = n
+	}
+	return output
 }
 
 // Returns an array of slices such that all permutations of the input array are represented.
